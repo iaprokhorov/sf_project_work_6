@@ -21,7 +21,15 @@ resource "yandex_compute_instance" "vm" {
   service_account_id = var.instance_service_account_id
   allow_stopping_for_update = true
 
+/*
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update",
+      "sudo apt install ansible"]
 
+  }
+
+*/
 
   resources {
     cores  = 2
@@ -33,6 +41,7 @@ resource "yandex_compute_instance" "vm" {
     initialize_params {
 #      image_id = data.yandex_compute_image.my_image.id
       image_id = var.instance_image_id
+      size = 40
     }
   }
 
@@ -44,5 +53,6 @@ resource "yandex_compute_instance" "vm" {
   metadata = {
     foo      = "bar"
     ssh-keys = "ubuntu:${file("/mnt/c/#Work/#Sites/02-HMCIS/YaCloud/Certs/iaprokhorov_yacloud.pub")}"
+
   }
 }

@@ -1,0 +1,61 @@
+---
+
+#pb_work6.yml
+- name: install docker
+  hosts: app
+  gather_facts: no
+  become: true
+  remote_user: ubuntu
+  become_user: root
+
+  tasks:
+    - name: Install package
+      apt:
+       name: docker
+       state: latest
+
+- name: install postgresql-server
+  hosts: database
+  gather_facts: no
+  become: no
+  remote_user: ubuntu
+
+  tasks:
+    - name: Install package
+      apt:
+       name: postgresql-{{ ver }}
+       update_cache: yes
+    notify:
+      - Enable Postgresql
+
+    - name: Check if Database is initialized
+      stat:
+        path: /var/lib/pgsql/14/data/pg_hba.conf
+      register: result
+
+    - name: Initialize the database
+      shell: {{ data }}/bin/postgresql-14-setup initdb
+      when: not result.stat.exists
+
+    - name: Allow remote connection to PostgreSQL database
+      copy:
+        src: /etc/ansible/playbooks/pg_hba.conf
+        dest: /var/lib/pgsql/14/data/pg_hba.conf
+      notify:
+        - Restart Postgresql
+
+      handlers:
+        - name: Restart Postgresql
+          systemd:
+            name: postgresql-14
+            state: restarted
+
+        - name: Start Postgresql
+          systemd:
+            name: postgresql-14
+            state: started
+
+        - name: Enable Postgresql
+          systemd:
+            name: postgresql-14
+            enabled: yes
